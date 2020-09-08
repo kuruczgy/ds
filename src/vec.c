@@ -77,6 +77,14 @@ int vec_append(struct vec *v, const void *n) {
     vec_append_multiple(v, n, 1);
     return v->len - 1;
 }
+void vec_remove(struct vec *v, int i) {
+    asrt(i >= 0 && i < v->len, "bad vec index");
+    if (v->len > i + 1) {
+        memmove(v->d + i * v->itemsize, v->d + (i + 1) * v->itemsize,
+            v->itemsize * (v->len - i - 1));
+    }
+    --v->len;
+}
 void * vec_get(struct vec *v, int i) {
     asrt(i >= 0 && i < v->len, "bad vec index");
     return v->d + i * v->itemsize;

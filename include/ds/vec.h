@@ -30,6 +30,7 @@ struct vec vec_new_empty(size_t itemsize);
 void vec_append_multiple(struct vec *v, const void *n, int l);
 /* return index of added element */
 int vec_append(struct vec *v, const void *n);
+void vec_remove(struct vec *v, int i);
 void * vec_get(struct vec *v, int i);
 const void * vec_get_c(const struct vec *v, int i);
 void vec_free(struct vec *v);
