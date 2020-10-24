@@ -1,5 +1,6 @@
-#ifndef MGU_MATRIX_H
-#define MGU_MATRIX_H
+// SPDX-License-Identifier: GPL-3.0-only
+#ifndef DS_MATRIX_H
+#define DS_MATRIX_H
 #include <stdbool.h>
 
 void mat3_ident(float m[static 9]);

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 #include <ds/tree.h>
 #include "core.h"
 

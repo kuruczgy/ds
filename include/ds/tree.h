@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 #ifndef DS_TREE_H
 #define DS_TREE_H
 #include <stdbool.h>

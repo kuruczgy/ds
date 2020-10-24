@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 #ifndef DS_VEC_H
 #define DS_VEC_H
 #include <stddef.h>

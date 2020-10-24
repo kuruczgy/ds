@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 #ifndef DS_CORE_H
 #define DS_CORE_H
 #include <stddef.h>
