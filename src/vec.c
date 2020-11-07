@@ -100,3 +100,6 @@ void vec_free(struct vec *v) {
 void vec_clear(struct vec *v) {
     v->len = 0;
 }
+bool vec_any(const struct vec *v) {
+    return v->len > 0;
+}
