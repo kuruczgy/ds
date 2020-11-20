@@ -35,6 +35,15 @@ void rb_delete(struct rb_tree *T, struct rb_node *z);
 typedef void (*rb_iter_f)(void *env, struct rb_node *x);
 void rb_iter(struct rb_tree *T, void *env, rb_iter_f f);
 void rb_iter_post(struct rb_tree *T, void *env, rb_iter_f f);
+struct rb_node *rb_successor(struct rb_tree *T, struct rb_node *x);
+
+struct rb_integer_node {
+	long long int val;
+	struct rb_node node;
+};
+extern struct rb_tree_ops rb_integer_ops;
+struct rb_integer_node *rb_integer_min_greater(struct rb_tree *T,
+	long long int min);
 
 /* intervals are [lo, hi) */
 struct interval_node {
@@ -51,5 +60,7 @@ bool interval_overlap(const long long int a[static 2],
 extern struct rb_tree_ops interval_ops;
 void interval_query(struct rb_tree *T, const long long int ran[static 2],
     void *env, void (*f)(void *env, struct interval_node *n));
+struct interval_node *interval_min_greater(struct rb_tree *T,
+	long long int min);
 
 #endif

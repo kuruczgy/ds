@@ -201,6 +201,56 @@ void rb_iter_post(struct rb_tree *T, void *env, rb_iter_f f) {
     }
 }
 
+static struct rb_node *rb_minimum(struct rb_tree *T, struct rb_node *x) {
+    while (x->left != &T->nil) x = x->left;
+    return x;
+}
+struct rb_node *rb_successor(struct rb_tree *T, struct rb_node *x) {
+    if (x->right != &T->nil) {
+        return rb_minimum(T, x->right);
+    }
+    struct rb_node *y = x->p;
+    while (y != &T->nil && x == y->right) {
+        x = y;
+        y = y->p;
+    }
+    return y;
+}
+
+/* note: z does not have to be in the tree, it's only passed to lt */
+static struct rb_node *rb_min_greater(struct rb_tree *T, struct rb_node *z) {
+    struct rb_node *y = &T->nil, *x = T->root;
+    while (x != &T->nil) {
+        y = x;
+        x = x->child[!T->ops->lt(z, x)];
+    }
+
+    // kinda hacky, but should work for now
+    while (y != &T->nil && !T->ops->lt(z, y)) {
+	    y = rb_successor(T, y);
+    }
+    return y;
+}
+
+int rb_integer_lt(struct rb_node *a, struct rb_node *b) {
+    struct rb_integer_node *na = container_of(a, struct rb_integer_node, node);
+    struct rb_integer_node *nb = container_of(b, struct rb_integer_node, node);
+    return na->val < nb->val;
+}
+struct rb_tree_ops rb_integer_ops = {
+	.lt = rb_integer_lt
+};
+struct rb_integer_node *rb_integer_min_greater(struct rb_tree *T,
+	long long int min) {
+    struct rb_integer_node z = { .val = min };
+    struct rb_node *y = rb_min_greater(T, &z.node);
+    if (y != &T->nil) {
+	    return container_of(y, struct rb_integer_node, node);
+    } else {
+	    return NULL;
+    }
+}
+
 int interval_lt(struct rb_node *a, struct rb_node *b) {
     struct interval_node *na = container_of(a, struct interval_node, node);
     struct interval_node *nb = container_of(b, struct interval_node, node);
@@ -245,5 +295,16 @@ void interval_query(struct rb_tree *T,
         const long long int ran[static 2], void *env, interval_f f) {
     if (T->root != &T->nil) {
         interval_query_recursive(T, ran, env, f, T->root);
+    }
+}
+
+struct interval_node *interval_min_greater(struct rb_tree *T,
+	long long int min) {
+    struct interval_node z = { .lo = min };
+    struct rb_node *y = rb_min_greater(T, &z.node);
+    if (y != &T->nil) {
+	    return container_of(y, struct interval_node, node);
+    } else {
+	    return NULL;
     }
 }
