@@ -19,7 +19,7 @@
 struct hashmap {
 	int table_size;
 	int size;
-    size_t itemsize;
+	size_t itemsize;
 	void *data;
 };
 

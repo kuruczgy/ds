@@ -5,15 +5,15 @@
 #include <stdbool.h>
 
 struct vec {
-    void *d;
-    int len, cap;
-    size_t itemsize;
+	void *d;
+	int len, cap;
+	size_t itemsize;
 };
 #define VEC_EMPTY(is) \
-    (struct vec){ .d = NULL, .len = 0, .cap = 0, .itemsize = is }
+	(struct vec){ .d = NULL, .len = 0, .cap = 0, .itemsize = is }
 
 struct str {
-    struct vec v;
+	struct vec v;
 };
 extern const struct str str_empty;
 
