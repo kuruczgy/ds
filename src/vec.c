@@ -100,6 +100,11 @@ void vec_free(struct vec *v) {
 void vec_clear(struct vec *v) {
     v->len = 0;
 }
+struct vec vec_copy(const struct vec *v) {
+    struct vec c = VEC_EMPTY(v->itemsize);
+    vec_append_multiple(&c, v->d, v->len);
+    return c;
+}
 bool vec_any(const struct vec *v) {
     return v->len > 0;
 }
