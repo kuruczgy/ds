@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
-#include "core.h"
-#include "tree.h"
+#include "../core.h"
+#include <ds/tree.h>
 
 struct aug_node {
 	int key, aug;

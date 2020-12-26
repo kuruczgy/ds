@@ -6,6 +6,7 @@
 #ifdef DS_DEBUG
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 static inline void asrt(bool b, const char *msg) {
 	if (!b) {
 		fprintf(stderr, "assert error msg: %s\n", msg);
