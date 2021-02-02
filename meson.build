@@ -28,7 +28,7 @@ ds_matrix = library(
 ds_matrix_dep = declare_dependency(link_with : ds_matrix, include_directories : incdir)
 
 foreach item : [
-  { 'c': 'src/test/container.c', 'd': [ ds_tree_dep ] },
+  { 'c': 'src/test/tree.c', 'd': [ ds_tree_dep ] },
   { 'c': 'src/test/iter.c', 'd': [ ds_iter_dep ] },
   { 'c': 'src/test/hashmap.c', 'd': [ ds_hashmap_dep ] },
   { 'c': 'src/bench/hashmap.c', 'd': [ ds_hashmap_dep ] },

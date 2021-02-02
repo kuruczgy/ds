@@ -4,7 +4,7 @@
 
 /*
  * Implementation based on the description of red-black trees in section 13 of
- * the book "Introduction to Algorithms".
+ * the book "Introduction to Algorithms" (commonly just referred to as CLRS)
  */
 
 enum color {
@@ -127,7 +127,8 @@ static struct rb_node *rb_tree_minimum(struct rb_tree *T, struct rb_node *x) {
 	return x;
 }
 
-static void rb_transplant(struct rb_tree *T, struct rb_node *u, struct rb_node *v) {
+static void rb_transplant(struct rb_tree *T, struct rb_node *u,
+		struct rb_node *v) {
 	if (u->p == &T->nil) {
 		T->root = v;
 	} else {
@@ -174,31 +175,77 @@ void rb_delete(struct rb_tree *T, struct rb_node *z) {
 	}
 }
 
-void rb_iter_rec(struct rb_tree *T, void *env, rb_iter_f f, int order,
-		struct rb_node *x) {
-	for (int i = 0; i < 2; ++i) {
-		if (i == order) {
-			f(env, x);
+struct rb_iter rb_iter(struct rb_tree *T, enum rb_iter_order order) {
+	return (struct rb_iter){
+		.T = T,
+		.x = T->root,
+		.prev = &T->nil,
+		.order = order,
+	};
+}
+
+/* CLRS Exercise 10.4-5
+ * see:
+ * https://github.com/gzc/CLRS/blob/master/C10-Elementary-Data-Structures/
+ *   10.4.md
+ * https://github.com/gzc/CLRS/blob/master/C10-Elementary-Data-Structures/
+ *   exercise_code/traversal.cpp
+ */
+bool rb_iter_next(struct rb_iter *iter, struct rb_node **res) {
+	struct rb_tree *T = iter->T;
+	while (iter->x != &T->nil) {
+		if (iter->prev == iter->x->p) {
+			iter->prev = iter->x;
+			if (iter->x->left != &T->nil) {
+				iter->x = iter->x->left;
+			} else if (iter->x->right != &T->nil) {
+				iter->x = iter->x->right;
+
+				if (iter->order == RB_ITER_ORDER_IN) {
+					*res = iter->prev;
+					return true;
+				}
+			} else {
+				iter->x = iter->x->p;
+
+				if (iter->order == RB_ITER_ORDER_POST) {
+					*res = iter->prev;
+					return true;
+				}
+				if (iter->order == RB_ITER_ORDER_IN) {
+					*res = iter->prev;
+					return true;
+				}
+			}
+		} else if (iter->prev == iter->x->left) {
+			iter->prev = iter->x;
+			if (iter->x->right != &T->nil) {
+				iter->x = iter->x->right;
+			} else {
+				iter->x = iter->x->p;
+
+				if (iter->order == RB_ITER_ORDER_POST) {
+					*res = iter->prev;
+					return true;
+				}
+			}
+
+			if (iter->order == RB_ITER_ORDER_IN) {
+				*res = iter->prev;
+				return true;
+			}
+		} else {
+			asrt(iter->prev == iter->x->right, "");
+			iter->prev = iter->x;
+			iter->x = iter->x->p;
+
+			if (iter->order == RB_ITER_ORDER_POST) {
+				*res = iter->prev;
+				return true;
+			}
 		}
-
-		struct rb_node *c = x->child[i];
-		if (c == &T->nil) continue;
-		rb_iter_rec(T, env, f, order, c);
 	}
-	if (order >= 2) {
-		f(env, x);
-	}
-}
-void rb_iter(struct rb_tree *T, void *env, rb_iter_f f) {
-	if (T->root != &T->nil) {
-		rb_iter_rec(T, env, f, 1, T->root);
-	}
-}
-
-void rb_iter_post(struct rb_tree *T, void *env, rb_iter_f f) {
-	if (T->root != &T->nil) {
-		rb_iter_rec(T, env, f, 2, T->root);
-	}
+	return false;
 }
 
 static struct rb_node *rb_minimum(struct rb_tree *T, struct rb_node *x) {
@@ -233,8 +280,10 @@ static struct rb_node *rb_min_greater(struct rb_tree *T, struct rb_node *z) {
 }
 
 int rb_integer_lt(struct rb_node *a, struct rb_node *b) {
-	struct rb_integer_node *na = container_of(a, struct rb_integer_node, node);
-	struct rb_integer_node *nb = container_of(b, struct rb_integer_node, node);
+	struct rb_integer_node *na =
+		container_of(a, struct rb_integer_node, node);
+	struct rb_integer_node *nb =
+		container_of(b, struct rb_integer_node, node);
 	return na->val < nb->val;
 }
 struct rb_tree_ops rb_integer_ops = {
@@ -262,7 +311,8 @@ void interval_update(struct rb_tree *T, struct rb_node *x) {
 	for (int i = 0; i < 2; ++i) {
 		struct rb_node *c = x->child[i];
 		if (c == &T->nil) continue;
-		struct interval_node *nc = container_of(c, struct interval_node, node);
+		struct interval_node *nc =
+			container_of(c, struct interval_node, node);
 		if (nx->max_hi < nc->max_hi) nx->max_hi = nc->max_hi;
 	}
 }
@@ -274,28 +324,87 @@ bool interval_overlap(const long long int a[static 2],
 		const long long int b[static 2]) {
 	return a[0] < b[1] && a[1] > b[0];
 }
-typedef void (*interval_f)(void *env, struct interval_node *n);
-static void interval_query_recursive(struct rb_tree *T,
-		const long long int ran[static 2], void *env, interval_f f,
-		struct rb_node *x) {
-	struct interval_node *nx = container_of(x, struct interval_node, node);
-	if (interval_overlap(ran, nx->ran)) {
-		f(env, nx);
-	}
-	for (int i = 0; i < 2; ++i) {
-		struct rb_node *c = x->child[i];
-		if (c == &T->nil) continue;
-		struct interval_node *nc = container_of(c, struct interval_node, node);
-		if (nc->max_hi > ran[0]) {
-			interval_query_recursive(T, ran, env, f, c);
+
+struct interval_iter interval_iter(struct rb_tree *T,
+		const long long int ran[static 2]) {
+	return (struct interval_iter){
+		.T = T,
+		.x = T->root,
+		.prev = &T->nil,
+		.ran = { ran[0], ran[1] },
+	};
+}
+
+bool interval_iter_next(struct interval_iter *iter,
+		struct interval_node **res) {
+	struct rb_tree *T = iter->T;
+	while (iter->x != &T->nil) {
+		struct interval_node *nx =
+			container_of(iter->x, struct interval_node, node);
+		if (iter->prev == iter->x->p) {
+			iter->prev = iter->x;
+			if (iter->x->left != &T->nil) {
+				struct interval_node *nc =
+					container_of(iter->x->left,
+						struct interval_node, node);
+				if (nc->max_hi > iter->ran[0]) {
+					iter->x = iter->x->left;
+					continue;
+				}
+			}
+
+			if (iter->x->right != &T->nil) {
+				struct interval_node *nc =
+					container_of(iter->x->right,
+						struct interval_node, node);
+				if (nx->ran[0] < iter->ran[1]
+						&& nc->max_hi > iter->ran[0]) {
+					iter->x = iter->x->right;
+					if (interval_overlap(iter->ran,
+							nx->ran)) {
+						*res = nx;
+						return true;
+					}
+					continue;
+				}
+
+			}
+
+			iter->x = iter->x->p;
+			if (interval_overlap(iter->ran, nx->ran)) {
+				*res = nx;
+				return true;
+			}
+		} else if (iter->prev == iter->x->left) {
+			iter->prev = iter->x;
+			if (iter->x->right != &T->nil) {
+				struct interval_node *nc =
+					container_of(iter->x->right,
+						struct interval_node, node);
+				if (nx->ran[0] < iter->ran[1]
+						&& nc->max_hi > iter->ran[0]) {
+					iter->x = iter->x->right;
+					if (interval_overlap(iter->ran,
+							nx->ran)) {
+						*res = nx;
+						return true;
+					}
+					continue;
+				}
+			}
+
+			iter->x = iter->x->p;
+			if (interval_overlap(iter->ran, nx->ran)) {
+				*res = nx;
+				return true;
+			}
+		} else {
+			asrt(iter->prev == iter->x->right, "");
+			iter->prev = iter->x;
+			iter->x = iter->x->p;
 		}
 	}
-}
-void interval_query(struct rb_tree *T,
-		const long long int ran[static 2], void *env, interval_f f) {
-	if (T->root != &T->nil) {
-		interval_query_recursive(T, ran, env, f, T->root);
-	}
+	return false;
 }
 
 struct interval_node *interval_min_greater(struct rb_tree *T,

@@ -2,6 +2,7 @@
 #ifndef DS_TREE_H
 #define DS_TREE_H
 #include <stdbool.h>
+#include <stdint.h>
 
 /* red-black tree & interval tree */
 struct rb_node {
@@ -32,9 +33,23 @@ void rb_tree_init(struct rb_tree *T, struct rb_tree_ops *ops);
 void rb_insert(struct rb_tree *T, struct rb_node *z);
 void rb_delete(struct rb_tree *T, struct rb_node *z);
 
-typedef void (*rb_iter_f)(void *env, struct rb_node *x);
-void rb_iter(struct rb_tree *T, void *env, rb_iter_f f);
-void rb_iter_post(struct rb_tree *T, void *env, rb_iter_f f);
+enum rb_iter_order {
+	RB_ITER_ORDER_IN,
+	RB_ITER_ORDER_POST,
+};
+
+struct rb_iter {
+	struct rb_tree *T;
+	struct rb_node *x, *prev;
+	enum rb_iter_order order;
+};
+
+/* Note, that during post-order traversal, it is safe to destroy the traversed
+ * nodes (as long as no pointers are modified), because the algorithm only
+ * examines the pointer values of nodes after they have been traversed, and
+ * does not actually dereference them. */
+struct rb_iter rb_iter(struct rb_tree *T, enum rb_iter_order order);
+bool rb_iter_next(struct rb_iter *iter, struct rb_node **res);
 struct rb_node *rb_successor(struct rb_tree *T, struct rb_node *x);
 
 struct rb_integer_node {
@@ -58,8 +73,21 @@ struct interval_node {
 bool interval_overlap(const long long int a[static 2],
 		const long long int b[static 2]);
 extern struct rb_tree_ops interval_ops;
-void interval_query(struct rb_tree *T, const long long int ran[static 2],
-	void *env, void (*f)(void *env, struct interval_node *n));
+
+struct interval_iter {
+	struct rb_tree *T;
+	struct rb_node *x, *prev;
+	long long int ran[2];
+};
+
+/* This will do an inorder traversal of the interval tree, guaranteeing that
+ * the intervals will appear in an increasing order based on the lower limit of
+ * ther intervals. */
+struct interval_iter interval_iter(struct rb_tree *T,
+	const long long int ran[static 2]);
+bool interval_iter_next(struct interval_iter *iter,
+	struct interval_node **res);
+
 struct interval_node *interval_min_greater(struct rb_tree *T,
 	long long int min);
 
