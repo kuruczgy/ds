@@ -15,5 +15,7 @@ void mat3_rot(float m[static 9], float a);
 void mat3_proj(float m[static 9], const int size[static 2]);
 
 bool aabb_contains(const float aabb[static 4], const float p[static 2]);
+void aabb_intersect(float out[static 4], const float a[static 4],
+	const float b[static 4]);
 
 #endif

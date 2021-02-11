@@ -93,3 +93,11 @@ bool aabb_contains(const float aabb[static 4], const float p[static 2])
 		&& p[1] >= aabb[1]
 		&& p[1] < aabb[1] + aabb[3];
 }
+
+void aabb_intersect(float out[static 4], const float a[static 4],
+		const float b[static 4]) {
+	out[0] = fmaxf(a[0], b[0]);
+	out[1] = fmaxf(a[1], b[1]);
+	out[2] = fminf(a[0] + a[2], b[0] + b[2]) - out[0];
+	out[3] = fminf(a[1] + a[3], b[1] + b[3]) - out[1];
+}
